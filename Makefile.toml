@@ -1,0 +1,33 @@
+[tasks.build-contract]
+description = "Build the todo contract WASM and package it"
+command = "fdev"
+args = ["build", "--package-type", "contract"]
+
+[tasks.build-delegate]
+description = "Build the notes delegate WASM and package it"
+command = "fdev"
+args = ["build", "--package-type", "delegate"]
+
+[tasks.build]
+description = "Build contract + delegate WASM and the UI"
+dependencies = ["build-contract", "build-delegate", "build-ui"]
+
+[tasks.build-ui]
+description = "Build the Rust wasm core + JS UI into ui/dist"
+script = '''
+cargo build -p todo-ui --target wasm32-unknown-unknown --release
+wasm-bindgen --target web --out-dir ui/dist \
+    target/wasm32-unknown-unknown/release/freezero_ui.wasm
+cp ui/static/index.html ui/static/app.js ui/dist/
+'''
+
+[tasks.publish-ui]
+description = "Build and publish the webapp to the local node (port 7510)"
+dependencies = ["build-ui"]
+script = '''
+fdev -p 7510 website update ui/dist --key todo --timeout 120
+'''
+
+[tasks.test]
+command = "cargo"
+args = ["test", "--workspace"]

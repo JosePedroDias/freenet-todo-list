@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>freenet-todo-list — shared todos + private notes</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #ffffff;
+        --fg: #1a1a2e;
+        --muted: #6b7280;
+        --accent: #4f46e5;
+        --accent-light: #eef2ff;
+        --border: #e5e7eb;
+        --card: #f9fafb;
+        --done: #9ca3af;
+        --danger: #ef4444;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #111118;
+          --fg: #e5e7eb;
+          --muted: #9ca3af;
+          --accent: #818cf8;
+          --accent-light: #1e1b4b;
+          --border: #2a2a3a;
+          --card: #1a1a2e;
+          --done: #4b5563;
+          --danger: #f87171;
+        }
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--fg);
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+      header { margin-bottom: 1.5rem; }
+      h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        letter-spacing: -0.02em;
+      }
+      .status {
+        font-size: 0.7rem;
+        padding: 0.15rem 0.6rem;
+        border-radius: 999px;
+        background: var(--border);
+        color: var(--muted);
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .status.connected {
+        background: #22c55e22;
+        color: #22c55e;
+      }
+      .sub { color: var(--muted); font-size: 0.85rem; margin-top: 0.2rem; }
+      .identity-bar {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+      .identity-bar code {
+        font-family: "SF Mono", "Fira Code", monospace;
+        background: var(--card);
+        padding: 0.15rem 0.4rem;
+        border-radius: 4px;
+        border: 1px solid var(--border);
+      }
+      .btn-ghost {
+        background: none;
+        border: 1px solid var(--border);
+        border-radius: 5px;
+        padding: 0.2rem 0.5rem;
+        font-size: 0.72rem;
+        cursor: pointer;
+        color: var(--muted);
+        transition: all 0.15s;
+      }
+      .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+      .input-row {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+      }
+      input[type="text"], textarea {
+        flex: 1;
+        padding: 0.6rem 0.8rem;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--bg);
+        color: var(--fg);
+        font: inherit;
+        font-size: 0.95rem;
+        transition: border-color 0.15s;
+      }
+      input[type="text"]:focus, textarea:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-light);
+      }
+      .btn-primary {
+        padding: 0.6rem 1.2rem;
+        background: var(--accent);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font: inherit;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: opacity 0.15s;
+      }
+      .btn-primary:hover { opacity: 0.9; }
+      .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+      ul { list-style: none; }
+      li {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 0.8rem 1rem;
+        margin-bottom: 0.6rem;
+        transition: border-color 0.15s;
+      }
+      li:hover { border-color: var(--muted); }
+      .task-head {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.6rem;
+      }
+      .task-head input[type="checkbox"] {
+        margin-top: 0.25rem;
+        width: 18px;
+        height: 18px;
+        accent-color: var(--accent);
+        cursor: pointer;
+      }
+      .task-text { flex: 1; word-break: break-word; }
+      .task-text.done { color: var(--done); text-decoration: line-through; }
+      .task-meta {
+        font-size: 0.7rem;
+        color: var(--muted);
+        margin-top: 0.3rem;
+        margin-left: 1.7rem;
+        font-family: "SF Mono", "Fira Code", monospace;
+      }
+      .btn-note {
+        background: none;
+        border: 1px solid var(--border);
+        border-radius: 5px;
+        padding: 0.2rem 0.55rem;
+        font-size: 0.72rem;
+        cursor: pointer;
+        color: var(--muted);
+        transition: all 0.15s;
+        white-space: nowrap;
+      }
+      .btn-note:hover { border-color: var(--accent); color: var(--accent); }
+      .btn-note.active { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+      .note-area {
+        margin-top: 0.6rem;
+        margin-left: 1.7rem;
+        padding-top: 0.6rem;
+        border-top: 1px dashed var(--border);
+      }
+      .note-area textarea {
+        margin-bottom: 0.4rem;
+        font-size: 0.85rem;
+        min-height: 60px;
+        resize: vertical;
+      }
+      .btn-save {
+        padding: 0.3rem 0.8rem;
+        background: var(--accent);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        font-weight: 500;
+      }
+      .btn-save:hover { opacity: 0.9; }
+      .empty {
+        color: var(--muted);
+        text-align: center;
+        padding: 2.5rem 1rem;
+        font-size: 0.9rem;
+      }
+      .empty::before {
+        content: "✓";
+        display: block;
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        opacity: 0.3;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <header>
+        <h1>Todo List <span class="status" id="status-pill">disconnected</span></h1>
+        <div class="sub">shared todos + private notes on Freenet</div>
+      </header>
+      <div class="identity-bar">
+        you: <code id="id-label">loading…</code>
+        <button class="btn-ghost" id="rotate-key">rotate key</button>
+      </div>
+      <div class="input-row">
+        <input type="text" id="new-task" placeholder="loading identity…" disabled />
+        <button class="btn-primary" id="add-btn" disabled>Add</button>
+      </div>
+      <div id="task-list"><div class="empty">no tasks yet — add one above</div></div>
+    </div>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,23 @@
+# Rust / cargo
+target
+
+# fdev build artifacts
+contracts/*/build
+delegates/*/build
+
+# UI build artifacts
+ui/dist
+ui-ts/
+
+# Injected keys (instance-specific, not for git)
+ui/todo_contract_key.txt
+ui/todo_code_hash.txt
+ui/delegate_key.txt
+ui/delegate_code_hash.txt
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode
+.idea

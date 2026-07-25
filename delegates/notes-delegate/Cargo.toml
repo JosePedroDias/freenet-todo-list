@@ -1,0 +1,18 @@
+[package]
+name = "notes-delegate"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+freenet-stdlib = { workspace = true }
+freenet-macros = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+[features]
+default = ["freenet-main-delegate"]
+contract = ["freenet-stdlib/contract"]
+freenet-main-delegate = []
